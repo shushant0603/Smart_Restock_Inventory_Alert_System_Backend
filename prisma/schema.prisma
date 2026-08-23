@@ -1,0 +1,74 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum AlertType {
+  LOW_STOCK
+}
+
+enum AlertStatus {
+  ACTIVE
+  RESOLVED
+}
+
+enum TransactionType {
+  SALE
+  RECEIPT
+  CONSUMPTION
+  ADJUSTMENT
+}
+
+model Product {
+  id              Int    @id @default(autoincrement())
+  name            String
+  category        String
+  currentStock    Int    @default(0)
+  minimumStock    Int
+  reorderQuantity Int
+  price           Float
+  supplier        String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  alerts       Alert[]
+  transactions Transaction[]
+}
+
+model Alert {
+  id           Int         @id @default(autoincrement())
+  productId    Int
+  type         AlertType
+  message      String
+  currentStock Int
+  minimumStock Int
+  status       AlertStatus @default(ACTIVE)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  product Product @relation(fields: [productId], references: [id])
+}
+
+model Transaction {
+  id        Int             @id @default(autoincrement())
+  productId Int
+  type      TransactionType
+  quantity  Int
+  note      String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  product Product @relation(fields: [productId], references: [id])
+}
