@@ -1,23 +1,28 @@
 import "dotenv/config";
 import express from "express";
+import cors from "cors";
 import http from "http";
-import { connectDB, getDBState } from "./src/config/db.js";
 import inventoryRoutes from "./src/routes/inventoryRoutes.js";
 import transactionRoutes from "./src/routes/transactionRoutes.js";
+import authRoutes from "./src/routes/authRoutes.js";
+import supplierRoutes from "./src/routes/supplierRoutes.js";
 import "./src/events/eventListner.js";
 import { initSocket } from "./src/socket/socketServer.js";
 import prisma from "./src/config/prisma.js";
 import testPrisma from "./src/routes/testPrisma.js";
 
-const app=express();
+const app = express();
 const server = http.createServer(app);
-const PORT=process.env.PORT || 3000;
+app.use(cors());
+const PORT = process.env.PORT || 3000;
 
 initSocket(server);
 
 app.use(express.json());
+app.use("/api/auth", authRoutes);
 app.use("/api", inventoryRoutes);
 app.use("/api/transactions", transactionRoutes);
+app.use("/api/suppliers", supplierRoutes);
 
 app.get("/",(req,res)=>{
     res.send("Hello World");
@@ -30,11 +35,9 @@ app.get("/",(req,res)=>{
 // test();
 app.use("/test-prisma", testPrisma);
 app.get("/health", (req, res) => {
-    res.json({ status: "ok", database: getDBState() });
+    res.json({ status: "ok", database: "connected (prisma)" });
 });
 
-connectDB().then(() => {
-    server.listen(PORT,()=>{
-        console.log(`Server is running on port ${PORT}`);
-    })
-});
+server.listen(PORT,()=>{
+    console.log(`Server is running on port ${PORT}`);
+})

@@ -1,13 +1,14 @@
 import eventBus from "./eventEmitter.js";
-import Product from "../models/product.js";
-import Alert from "../models/Alert.js";
+import prisma from "../config/prisma.js";
 import { sendLowStockEmail } from "../services/emailService.js";
 import { sendSMS } from "../services/msg.services.js";
 import { getIO } from "../socket/socketServer.js";
 
 eventBus.on("transactionCreated", async (transaction) => {
     try {
-        const product = await Product.findById(transaction.productId);
+        const product = await prisma.product.findUnique({
+            where: { id: parseInt(transaction.productId) }
+        });
         if (!product) {
             console.error("Inventory update skipped: product not found", transaction.productId);
             return;
@@ -25,7 +26,7 @@ eventBus.on("transactionCreated", async (transaction) => {
 
         if (updatedStock < 0) {
             console.error("Inventory update skipped: insufficient stock", {
-                productId: product._id,
+                productId: product.id,
                 currentStock: product.currentStock,
                 requestedQuantity: transaction.quantity,
                 type: transaction.type,
@@ -33,20 +34,31 @@ eventBus.on("transactionCreated", async (transaction) => {
             return;
         }
 
-        product.currentStock = updatedStock;
-        await product.save();
+        const updatedProduct = await prisma.product.update({
+            where: { id: product.id },
+            data: { currentStock: updatedStock }
+        });
 
         eventBus.emit("inventoryUpdated", {
             transaction,
-            product: product.toObject(),
+            product: updatedProduct,
             updatedStock,
         });
 
         console.log("Transaction event processed successfully", {
-            transactionId: transaction._id,
-            productId: product._id,
+            transactionId: transaction.id,
+            productId: product.id,
             updatedStock,
         });
+
+        // Emit real-time update to all connected frontend clients
+        const io = getIO();
+        if (io) {
+            io.emit("stockUpdated", {
+                productId: product.id,
+                currentStock: updatedStock,
+            });
+        }
     } catch (error) {
         console.error("transactionCreated handler failed:", error.message);
     }
@@ -58,24 +70,33 @@ eventBus.on("inventoryUpdated", async ({ transaction, product, updatedStock }) =
 
         if (isLowStock) {
             const alertMessage = `${product.name} is low on stock`;
-            const existingActiveAlert = await Alert.findOne({
-                productId: product._id,
-                type: "LOW_STOCK",
-                status: "ACTIVE",
+            const existingActiveAlert = await prisma.alert.findFirst({
+                where: {
+                    productId: product.id,
+                    type: "LOW_STOCK",
+                    status: "ACTIVE",
+                }
             });
 
             if (!existingActiveAlert) {
-                await Alert.create({
-                    productId: product._id,
-                    message: alertMessage,
-                    currentStock: updatedStock,
-                    minimumStock: product.minimumStock,
-                    status: "ACTIVE",
+                await prisma.alert.create({
+                    data: {
+                        productId: product.id,
+                        message: alertMessage,
+                        currentStock: updatedStock,
+                        minimumStock: product.minimumStock,
+                        status: "ACTIVE",
+                        type: "LOW_STOCK"
+                    }
                 });
             } else {
-                existingActiveAlert.currentStock = updatedStock;
-                existingActiveAlert.minimumStock = product.minimumStock;
-                await existingActiveAlert.save();
+                await prisma.alert.update({
+                    where: { id: existingActiveAlert.id },
+                    data: {
+                        currentStock: updatedStock,
+                        minimumStock: product.minimumStock
+                    }
+                });
             }
 
             eventBus.emit("lowStockDetected", {
@@ -89,16 +110,12 @@ eventBus.on("inventoryUpdated", async ({ transaction, product, updatedStock }) =
             return;
         }
 
-        await Alert.updateMany(
-            { productId: product._id, type: "LOW_STOCK", status: "ACTIVE" },
-            {
-                $set: {
-                    status: "RESOLVED",
-                    currentStock: updatedStock,
-                    minimumStock: product.minimumStock,
-                },
+        await prisma.alert.deleteMany({
+            where: { 
+                productId: product.id, 
+                type: "LOW_STOCK"
             }
-        );
+        });
     } catch (error) {
         console.error("inventoryUpdated handler failed:", error.message);
     }
@@ -127,7 +144,7 @@ eventBus.on("notifyLowStockBySocket", async ({ product, message }) => {
         }
 
         io.emit("lowStockAlert", {
-            productId: product._id,
+            productId: product.id,
             name: product.name,
             currentStock: product.currentStock,
             minimumStock: product.minimumStock,
@@ -146,5 +163,5 @@ eventBus.on("notifyLowStockBYSMS", async ({ product, message }) => {
     }
 });
 eventBus.on("notifyLowStockBYWhatsapp", async ({ product, message }) => {
-    console.log(`WhatsApp Alert: ${message} for product ${product.name} (ID: ${product._id})`);
+    console.log(`WhatsApp Alert: ${message} for product ${product.name} (ID: ${product.id})`);
 });

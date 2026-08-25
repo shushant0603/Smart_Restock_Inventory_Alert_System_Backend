@@ -1,13 +1,15 @@
 import eventBus from "../events/eventEmitter.js";
-import Transaction from "../models/transaction.js";
+import prisma from "../config/prisma.js";
 
 class Transactionservices {
     async createTransaction(data) {
-        const newTransaction = await Transaction.create({
-            productId: data.productId,
-            type: data.type,
-            quantity: data.quantity,
-            note: data.note,
+        const newTransaction = await prisma.transaction.create({
+            data: {
+                productId: parseInt(data.productId),
+                type: data.type.toUpperCase(),
+                quantity: parseInt(data.quantity),
+                note: data.note,
+            }
         });
 
       eventBus.emit("transactionCreated", newTransaction);
