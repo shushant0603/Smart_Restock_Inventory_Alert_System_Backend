@@ -9,6 +9,7 @@ class Transactionservices {
                 type: data.type.toUpperCase(),
                 quantity: parseInt(data.quantity),
                 note: data.note,
+                userId: data.userId,
             }
         });
 

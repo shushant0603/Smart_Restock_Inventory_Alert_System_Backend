@@ -1,11 +1,13 @@
 import express from "express";
 import prisma from "../config/prisma.js";
 import createTransaction from "../controller/Transaction.js";
+import { protect } from "../middleware/authMiddleware.js";
 const router = express.Router();
 
-router.get("/", async (req, res) => {
+router.get("/", protect, async (req, res) => {
   try {
     const transactions = await prisma.transaction.findMany({
+      where: { userId: req.user.id },
       include: { product: true },
       orderBy: { createdAt: "desc" }
     });
@@ -15,6 +17,6 @@ router.get("/", async (req, res) => {
   }
 });
 
-router.post("/", createTransaction);     
+router.post("/", protect, createTransaction);     
 
 export default router;

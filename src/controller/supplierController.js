@@ -3,6 +3,7 @@ import prisma from "../config/prisma.js";
 export const getAllSuppliers = async (req, res) => {
   try {
     const suppliers = await prisma.supplier.findMany({
+      where: { userId: req.user.id },
       orderBy: { createdAt: 'desc' }
     });
     res.status(200).json(suppliers);
@@ -15,7 +16,7 @@ export const createSupplier = async (req, res) => {
   try {
     const { name, contactEmail, phone, address } = req.body;
     const supplier = await prisma.supplier.create({
-      data: { name, contactEmail, phone, address }
+      data: { name, contactEmail, phone, address, userId: req.user.id }
     });
     res.status(201).json(supplier);
   } catch (error) {
@@ -26,8 +27,8 @@ export const createSupplier = async (req, res) => {
 export const getSupplierById = async (req, res) => {
   try {
     const { id } = req.params;
-    const supplier = await prisma.supplier.findUnique({
-      where: { id: parseInt(id) },
+    const supplier = await prisma.supplier.findFirst({
+      where: { id: parseInt(id), userId: req.user.id },
       include: { products: true }
     });
     if (!supplier) {

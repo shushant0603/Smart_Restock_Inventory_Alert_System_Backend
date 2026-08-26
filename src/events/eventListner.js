@@ -86,7 +86,8 @@ eventBus.on("inventoryUpdated", async ({ transaction, product, updatedStock }) =
                         currentStock: updatedStock,
                         minimumStock: product.minimumStock,
                         status: "ACTIVE",
-                        type: "LOW_STOCK"
+                        type: "LOW_STOCK",
+                        userId: product.userId
                     }
                 });
             } else {

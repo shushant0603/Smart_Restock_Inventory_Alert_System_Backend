@@ -39,6 +39,9 @@ model Product {
   supplierId      Int
   supplier        Supplier @relation(fields: [supplierId], references: [id])
 
+  userId          String?
+  user            User?    @relation(fields: [userId], references: [id])
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -55,6 +58,9 @@ model Alert {
   minimumStock Int
   status       AlertStatus @default(ACTIVE)
 
+  userId       String?
+  user         User?       @relation(fields: [userId], references: [id])
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -68,6 +74,9 @@ model Transaction {
   quantity  Int
   note      String?
 
+  userId    String?
+  user      User?           @relation(fields: [userId], references: [id])
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -80,6 +89,9 @@ model Supplier {
   contactEmail String?
   phone        String?
   address      String?
+
+  userId       String?
+  user         User?     @relation(fields: [userId], references: [id])
 
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
@@ -102,6 +114,10 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   
+  products     Product[]
+  alerts       Alert[]
+  transactions Transaction[]
+  suppliers    Supplier[]
   activityLogs ActivityLog[]
 }
 

@@ -1,7 +1,8 @@
  import transaction from "../services/transaction.services.js";
  const createTransaction = async (req, res) => {
     try {
-        const createtransaction= await transaction.createTransaction(req.body);
+        const payload = { ...req.body, userId: req.user.id };
+        const createtransaction= await transaction.createTransaction(payload);
         res.status(201).json(
             {
                 message:'order created successfully',

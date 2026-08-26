@@ -1,11 +1,13 @@
 import express from "express";
 import prisma from "../config/prisma.js";
-// Alert model removed in favor of Prisma
+import { protect } from "../middleware/authMiddleware.js";
+
 const router = express.Router();
 
-router.get("/products", async (req, res) => {
+router.get("/products", protect, async (req, res) => {
   try {
     const products = await prisma.product.findMany({
+      where: { userId: req.user.id },
       orderBy: { createdAt: "desc" },
       include: { supplier: true }
     });
@@ -15,24 +17,25 @@ router.get("/products", async (req, res) => {
   }
 });
 
-router.post("/products", async (req, res) => {
+router.post("/products", protect, async (req, res) => {
   try {
     const { supplier, ...productData } = req.body;
     
     let supplierRecord = await prisma.supplier.findFirst({
-      where: { name: supplier }
+      where: { name: supplier, userId: req.user.id }
     });
 
     if (!supplierRecord) {
       supplierRecord = await prisma.supplier.create({
-        data: { name: supplier }
+        data: { name: supplier, userId: req.user.id }
       });
     }
 
     const product = await prisma.product.create({
       data: {
         ...productData,
-        supplierId: supplierRecord.id
+        supplierId: supplierRecord.id,
+        userId: req.user.id
       }
     });
     res.status(201).json(product);
@@ -41,12 +44,12 @@ router.post("/products", async (req, res) => {
   }
 });
 
-router.get("/dashboard", async (req, res) => {
+router.get("/dashboard", protect, async (req, res) => {
   try {
-    const totalProducts = await prisma.product.count();
+    const totalProducts = await prisma.product.count({ where: { userId: req.user.id } });
     
     // Calculate smart suggestions for ALL products
-    const allProducts = await prisma.product.findMany();
+    const allProducts = await prisma.product.findMany({ where: { userId: req.user.id } });
     const LEAD_TIME_DAYS = 3;
     
     const suggestions = allProducts.map(product => {
@@ -71,7 +74,8 @@ router.get("/dashboard", async (req, res) => {
     // Fetch transactions to generate REAL Sales Trend Data
     const salesTransactions = await prisma.transaction.findMany({
       where: {
-        type: { in: ["SALE", "CONSUMPTION"] }
+        type: { in: ["SALE", "CONSUMPTION"] },
+        userId: req.user.id
       },
       orderBy: { createdAt: "asc" }
     });
@@ -149,12 +153,14 @@ router.get("/dashboard", async (req, res) => {
       }
     });
 
+    const outOfStockCount = allProducts.filter(p => p.currentStock === 0).length;
+
     const dashboardStats = {
       stats: {
         totalProducts,
-        healthyStock: totalProducts - suggestions.length,
+        healthyStock: totalProducts - suggestions.length - outOfStockCount,
         lowStock: suggestions.length,
-        outOfStock: 0,
+        outOfStock: outOfStockCount,
         totalProductsTrend: "+3.2% this month",
         healthyStockTrend: "91% of catalog",
         lowStockTrend: "Needs reorder soon",
@@ -166,7 +172,7 @@ router.get("/dashboard", async (req, res) => {
       },
       products: allProducts.map(p => ({ id: p.id, name: p.name })),
       alerts: await prisma.alert.findMany({
-        take: 5,
+        where: { userId: req.user.id },
         include: { product: true },
         orderBy: { createdAt: "desc" }
       }),
@@ -183,9 +189,10 @@ router.get("/dashboard", async (req, res) => {
   }
 });
 
-router.get("/alerts", async (req, res) => {
+router.get("/alerts", protect, async (req, res) => {
   try {
     const alerts = await prisma.alert.findMany({
+      where: { userId: req.user.id },
       include: { product: true },
       orderBy: { createdAt: "desc" }
     });
@@ -195,11 +202,11 @@ router.get("/alerts", async (req, res) => {
   }
 });
 
-router.post("/alerts", async (req, res) => {
+router.post("/alerts", protect, async (req, res) => {
   try {
     const { productId, type, message, currentStock, minimumStock } = req.body;
     
-    const productExists = await prisma.product.findUnique({ where: { id: parseInt(productId) } });
+    const productExists = await prisma.product.findFirst({ where: { id: parseInt(productId), userId: req.user.id } });
     if (!productExists) {
       return res.status(404).json({ message: "Product not found" });
     }
@@ -210,7 +217,8 @@ router.post("/alerts", async (req, res) => {
         type,
         message,
         currentStock,
-        minimumStock
+        minimumStock,
+        userId: req.user.id
       }
     });
     res.status(201).json(alert);
