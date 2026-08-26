@@ -13,7 +13,14 @@ import testPrisma from "./src/routes/testPrisma.js";
 
 const app = express();
 const server = http.createServer(app);
-app.use(cors());
+const allowedOrigins = process.env.FRONTEND_URL 
+  ? process.env.FRONTEND_URL.split(",") 
+  : ["http://localhost:5173"];
+
+app.use(cors({
+  origin: allowedOrigins,
+  credentials: true
+}));
 const PORT = process.env.PORT || 3000;
 
 initSocket(server);
