@@ -12,6 +12,7 @@ router.get("/", async (req, res) => {
       products,
     });
   } catch (error) {
+    console.error("Error in testPrisma.js:", error);
     console.error(error);
 
     res.status(500).json({

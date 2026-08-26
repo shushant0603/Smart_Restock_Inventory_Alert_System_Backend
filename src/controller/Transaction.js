@@ -10,6 +10,7 @@
             }
         );
     } catch (error) {
+    console.error("Error in Transaction.js:", error);
         const statusCode = error.statusCode || (error.name === "ValidationError" ? 400 : 500);
         res.status(statusCode).json(
             {

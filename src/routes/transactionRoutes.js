@@ -13,6 +13,7 @@ router.get("/", protect, async (req, res) => {
     });
     res.status(200).json(transactions);
   } catch (error) {
+    console.error("Error in transactionRoutes.js:", error);
     res.status(500).json({ message: "Failed to fetch transactions", error: error.message });
   }
 });

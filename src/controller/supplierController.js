@@ -8,6 +8,7 @@ export const getAllSuppliers = async (req, res) => {
     });
     res.status(200).json(suppliers);
   } catch (error) {
+    console.error("Error in supplierController.js:", error);
     res.status(500).json({ message: "Failed to fetch suppliers", error: error.message });
   }
 };
@@ -20,6 +21,7 @@ export const createSupplier = async (req, res) => {
     });
     res.status(201).json(supplier);
   } catch (error) {
+    console.error("Error in supplierController.js:", error);
     res.status(400).json({ message: "Failed to create supplier", error: error.message });
   }
 };
@@ -36,6 +38,7 @@ export const getSupplierById = async (req, res) => {
     }
     res.status(200).json(supplier);
   } catch (error) {
+    console.error("Error in supplierController.js:", error);
     res.status(500).json({ message: "Failed to fetch supplier", error: error.message });
   }
 };

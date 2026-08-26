@@ -60,6 +60,7 @@ eventBus.on("transactionCreated", async (transaction) => {
             });
         }
     } catch (error) {
+    console.error("Error in eventListner.js:", error);
         console.error("transactionCreated handler failed:", error.message);
     }
 });
@@ -118,6 +119,7 @@ eventBus.on("inventoryUpdated", async ({ transaction, product, updatedStock }) =
             }
         });
     } catch (error) {
+    console.error("Error in eventListner.js:", error);
         console.error("inventoryUpdated handler failed:", error.message);
     }
 });
@@ -133,6 +135,7 @@ eventBus.on("notifyLowStockByEmail", async ({ product }) => {
     try {
         await sendLowStockEmail(product);
     } catch (error) {
+    console.error("Error in eventListner.js:", error);
         console.error("notifyLowStockByEmail handler failed:", error.message);
     }
 });
@@ -153,6 +156,7 @@ eventBus.on("notifyLowStockBySocket", async ({ product, message }) => {
             timestamp: new Date().toISOString(),
         });
     } catch (error) {
+    console.error("Error in eventListner.js:", error);
         console.error("notifyLowStockBySocket handler failed:", error.message);
     }
 });
@@ -160,6 +164,7 @@ eventBus.on("notifyLowStockBYSMS", async ({ product, message }) => {
     try {
         await sendSMS(process.env.ALERT_MOBILE, { message });
     } catch (error) {
+    console.error("Error in eventListner.js:", error);
         console.error("notifyLowStockBYSMS handler failed:", error.message);
     }
 });

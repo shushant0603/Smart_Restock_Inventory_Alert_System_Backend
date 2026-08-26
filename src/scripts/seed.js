@@ -100,6 +100,7 @@ const generateData = async () => {
     console.log('Seeding completed successfully!');
     
   } catch (error) {
+    console.error("Error in seed.js:", error);
     console.error('Error during seeding:', error);
   } finally {
     await prisma.$disconnect();

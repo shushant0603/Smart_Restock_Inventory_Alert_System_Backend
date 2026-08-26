@@ -63,6 +63,7 @@ export const sendLowStockEmail = async (product) => {
     return true;
 
   } catch (error) {
+    console.error("Error in emailService.js:", error);
     console.error("Email service error:", error);
     return false;
   }

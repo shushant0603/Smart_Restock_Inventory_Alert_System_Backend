@@ -13,6 +13,7 @@ router.get("/products", protect, async (req, res) => {
     });
     res.status(200).json(products);
   } catch (error) {
+    console.error("Error in inventoryRoutes.js:", error);
     res.status(500).json({ message: "Failed to fetch products", error: error.message });
   }
 });
@@ -40,6 +41,7 @@ router.post("/products", protect, async (req, res) => {
     });
     res.status(201).json(product);
   } catch (error) {
+    console.error("Error in inventoryRoutes.js:", error);
     res.status(400).json({ message: "Failed to create product", error: error.message });
   }
 });
@@ -182,6 +184,7 @@ router.get("/dashboard", protect, async (req, res) => {
 
     res.status(200).json(dashboardStats);
   } catch (error) {
+    console.error("Error in inventoryRoutes.js:", error);
     res.status(500).json({
       message: "Failed to fetch dashboard data",
       error: error.message,
@@ -198,6 +201,7 @@ router.get("/alerts", protect, async (req, res) => {
     });
     res.status(200).json(alerts);
   } catch (error) {
+    console.error("Error in inventoryRoutes.js:", error);
     res.status(500).json({ message: "Failed to fetch alerts", error: error.message });
   }
 });
@@ -223,6 +227,7 @@ router.post("/alerts", protect, async (req, res) => {
     });
     res.status(201).json(alert);
   } catch (error) {
+    console.error("Error in inventoryRoutes.js:", error);
     res.status(400).json({ message: "Failed to create alert", error: error.message });
   }
 });
