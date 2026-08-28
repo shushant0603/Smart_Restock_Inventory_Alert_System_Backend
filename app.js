@@ -6,6 +6,7 @@ import inventoryRoutes from "./src/routes/inventoryRoutes.js";
 import transactionRoutes from "./src/routes/transactionRoutes.js";
 import authRoutes from "./src/routes/authRoutes.js";
 import supplierRoutes from "./src/routes/supplierRoutes.js";
+import planningRoutes from "./src/routes/planning.js";
 import "./src/events/eventListner.js";
 import { initSocket } from "./src/socket/socketServer.js";
 import prisma from "./src/config/prisma.js";
@@ -30,6 +31,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api", inventoryRoutes);
 app.use("/api/transactions", transactionRoutes);
 app.use("/api/suppliers", supplierRoutes);
+app.use("/api/planning", planningRoutes);
 
 app.get("/", (req, res) => {
     res.send("Hello World");
