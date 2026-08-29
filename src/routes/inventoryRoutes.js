@@ -46,6 +46,35 @@ router.post("/products", protect, async (req, res) => {
   }
 });
 
+router.put("/products/:id", protect, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { currentStock, minimumStock } = req.body;
+
+    const product = await prisma.product.findFirst({
+      where: { id: parseInt(id), userId: req.user.id }
+    });
+
+    if (!product) {
+      return res.status(404).json({ message: "Product not found" });
+    }
+
+    const updatedProduct = await prisma.product.update({
+      where: { id: parseInt(id) },
+      data: {
+        currentStock: parseInt(currentStock),
+        minimumStock: parseInt(minimumStock)
+      }
+    });
+
+    // We might also want to trigger an inventory check event here, but since this is manual edit, we just update it.
+    res.status(200).json(updatedProduct);
+  } catch (error) {
+    console.error("Error updating product:", error);
+    res.status(400).json({ message: "Failed to update product", error: error.message });
+  }
+});
+
 router.get("/dashboard", protect, async (req, res) => {
   try {
     const totalProducts = await prisma.product.count({ where: { userId: req.user.id } });
